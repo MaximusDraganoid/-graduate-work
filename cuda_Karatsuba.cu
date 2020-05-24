@@ -50,7 +50,7 @@ template <int size> __device__ void standartMulKernelKar(unsigned int* a, unsign
 	unsigned long long int tempResult = 0;
 	unsigned int carryArr[2 * size];
 	unsigned int res[2 * size];
-	//само умножение
+	//Г±Г Г¬Г® ГіГ¬Г­Г®Г¦ГҐГ­ГЁГҐ
 	for (int i = 0; i< size; i++) {
 		for (int j = 0; j < size; j++) {
 			tempResult = res[i + j] + a[i] * b[j];
@@ -58,7 +58,7 @@ template <int size> __device__ void standartMulKernelKar(unsigned int* a, unsign
 			carryArr[i + j + 1] += tempResult >> 32; //tempResult / 10;
 		}
 	}
-	//распределение переноса
+	//Г°Г Г±ГЇГ°ГҐГ¤ГҐГ«ГҐГ­ГЁГҐ ГЇГҐГ°ГҐГ­Г®Г±Г 
 	for (int i = 0; i < 2 * size; i++) {
 		tempResult = carryArr[i] + res[i];
 		c[i] = (unsigned int)tempResult; //tempResult % 10;
@@ -88,13 +88,13 @@ template <int size> __device__ void karatsubaMulOneStep(unsigned int *a, unsigne
 	unsigned int res[2 * size];
 
 	unsigned long long int tempRes = 0;
-	//А0*В0
+	//ГЂ0*Г‚0
 	standartMulKernelKar <size / 2>(leftA, leftB, middleResOne);
 
-	//А1*В1
+	//ГЂ1*Г‚1
 	standartMulKernelKar <size / 2>(rightA, rightB, middleResTwo);
 
-	//заполняем центральные значения 
+	//Г§Г ГЇГ®Г«Г­ГїГҐГ¬ Г¶ГҐГ­ГІГ°Г Г«ГјГ­Г»ГҐ Г§Г­Г Г·ГҐГ­ГЁГї 
 	for (int i = 0; i < size; i++) {
 		res[i] = middleResOne[i];
 	}
@@ -104,7 +104,7 @@ template <int size> __device__ void karatsubaMulOneStep(unsigned int *a, unsigne
 	}
 
 	int perenos = 0;
-	//добавляем A0*B0 и A1*B1 к центральным байтам
+	//Г¤Г®ГЎГ ГўГ«ГїГҐГ¬ A0*B0 ГЁ A1*B1 ГЄ Г¶ГҐГ­ГІГ°Г Г«ГјГ­Г»Г¬ ГЎГ Г©ГІГ Г¬
 	for (int i = 0; i < size; i++) {
 		tempRes = res[i + size / 2] + middleResOne[i];
 		res[i + size / 2] = (unsigned int)tempRes;
@@ -150,7 +150,7 @@ template <int size> __device__ void karatsubaMulOneStep(unsigned int *a, unsigne
 		carryAdd[i] = 0;
 	}
 
-	//вычисляем разности
+	//ГўГ»Г·ГЁГ±Г«ГїГҐГ¬ Г°Г Г§Г­Г®Г±ГІГЁ
 	unsigned short int t_a = 0;
 	unsigned short int t_b = 0;
 
@@ -163,7 +163,7 @@ template <int size> __device__ void karatsubaMulOneStep(unsigned int *a, unsigne
 	}
 
 	unsigned int tempDiff = 0;
-	//классическое вычитание 
+	//ГЄГ«Г Г±Г±ГЁГ·ГҐГ±ГЄГ®ГҐ ГўГ»Г·ГЁГІГ Г­ГЁГҐ 
 	unsigned int zaem = 0;
 	int base = 10;
 
@@ -179,7 +179,7 @@ template <int size> __device__ void karatsubaMulOneStep(unsigned int *a, unsigne
 			t_a = 1;
 		}
 	}
-	//вычисляем модуль разности в случае 
+	//ГўГ»Г·ГЁГ±Г«ГїГҐГ¬ Г¬Г®Г¤ГіГ«Гј Г°Г Г§Г­Г®Г±ГІГЁ Гў Г±Г«ГіГ·Г ГҐ 
 	if (t_a == 1) {
 		unsigned int mask_a = -t_a;
 		for (int i = 0; i < size / 2; i++) {
@@ -193,7 +193,7 @@ template <int size> __device__ void karatsubaMulOneStep(unsigned int *a, unsigne
 		}
 	}
 	
-	//классическое вычитание
+	//ГЄГ«Г Г±Г±ГЁГ·ГҐГ±ГЄГ®ГҐ ГўГ»Г·ГЁГІГ Г­ГЁГҐ
 	zaem = 0;
 	for (int i = 0; i < size / 2; i++) {
 		middleResTwo[i] = rightB[i] - leftB[i] - zaem;
@@ -220,9 +220,9 @@ template <int size> __device__ void karatsubaMulOneStep(unsigned int *a, unsigne
 		}
 	}
 
-	//вычисление произведений модулей
+	//ГўГ»Г·ГЁГ±Г«ГҐГ­ГЁГҐ ГЇГ°Г®ГЁГ§ГўГҐГ¤ГҐГ­ГЁГ© Г¬Г®Г¤ГіГ«ГҐГ©
 	standartMulKernelKar <size / 2>(middleResOne, middleResTwo, middleResThree);
-	//вычитание произведения из центральных бит
+	//ГўГ»Г·ГЁГІГ Г­ГЁГҐ ГЇГ°Г®ГЁГ§ГўГҐГ¤ГҐГ­ГЁГї ГЁГ§ Г¶ГҐГ­ГІГ°Г Г«ГјГ­Г»Гµ ГЎГЁГІ
 	for (int i = 0; i < size; i++) {
 		carryAdd[i] = 0;
 	}
@@ -343,7 +343,7 @@ void main()
 		fprintf(stderr, "cudaMalloc failed! 5");
 		return;
 	}
-	//замеры времени
+	//Г§Г Г¬ГҐГ°Г» ГўГ°ГҐГ¬ГҐГ­ГЁ
 	cudaEvent_t start, stop;
 	
 	float gpuTime = 0.0f;
@@ -351,7 +351,7 @@ void main()
 	cudaEventCreate(&start);
 	cudaEventCreate(&stop);
 
-	cudaEventRecord(start, 0);//начало отсчета
+	cudaEventRecord(start, 0);//Г­Г Г·Г Г«Г® Г®ГІГ±Г·ГҐГІГ 
 
 	func_2 <<<1, 1>>> (a_device, b_device, resArrray_device);
 
