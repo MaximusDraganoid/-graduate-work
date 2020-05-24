@@ -50,7 +50,7 @@ template <int size> __device__ void standartMulKernelKar(unsigned int* a, unsign
 	unsigned long long int tempResult = 0;
 	unsigned int carryArr[2 * size];
 	unsigned int res[2 * size];
-	//ñàìî óìíîæåíèå
+	//само умножение
 	for (int i = 0; i< size; i++) {
 		for (int j = 0; j < size; j++) {
 			tempResult = res[i + j] + a[i] * b[j];
@@ -58,7 +58,7 @@ template <int size> __device__ void standartMulKernelKar(unsigned int* a, unsign
 			carryArr[i + j + 1] += tempResult >> 32; //tempResult / 10;
 		}
 	}
-	//ðàñïðåäåëåíèå ïåðåíîñà
+	//распределение переноса
 	for (int i = 0; i < 2 * size; i++) {
 		tempResult = carryArr[i] + res[i];
 		c[i] = (unsigned int)tempResult; //tempResult % 10;
@@ -88,13 +88,13 @@ template <int size> __device__ void karatsubaMulOneStep(unsigned int *a, unsigne
 	unsigned int res[2 * size];
 
 	unsigned long long int tempRes = 0;
-	//À0*Â0
+	//А0*В0
 	standartMulKernelKar <size / 2>(leftA, leftB, middleResOne);
 
-	//À1*Â1
+	//А1*В1
 	standartMulKernelKar <size / 2>(rightA, rightB, middleResTwo);
 
-	//çàïîëíÿåì öåíòðàëüíûå çíà÷åíèÿ 
+	//заполняем центральные значения 
 	for (int i = 0; i < size; i++) {
 		res[i] = middleResOne[i];
 	}
@@ -104,7 +104,7 @@ template <int size> __device__ void karatsubaMulOneStep(unsigned int *a, unsigne
 	}
 
 	int perenos = 0;
-	//äîáàâëÿåì A0*B0 è A1*B1 ê öåíòðàëüíûì áàéòàì
+	//добавляем A0*B0 и A1*B1 к центральным байтам
 	for (int i = 0; i < size; i++) {
 		tempRes = res[i + size / 2] + middleResOne[i];
 		res[i + size / 2] = (unsigned int)tempRes;
@@ -150,7 +150,7 @@ template <int size> __device__ void karatsubaMulOneStep(unsigned int *a, unsigne
 		carryAdd[i] = 0;
 	}
 
-	//âû÷èñëÿåì ðàçíîñòè
+	//вычисляем разности
 	unsigned short int t_a = 0;
 	unsigned short int t_b = 0;
 
@@ -163,7 +163,7 @@ template <int size> __device__ void karatsubaMulOneStep(unsigned int *a, unsigne
 	}
 
 	unsigned int tempDiff = 0;
-	//êëàññè÷åñêîå âû÷èòàíèå 
+	//классическое вычитание 
 	unsigned int zaem = 0;
 	int base = 10;
 
@@ -179,7 +179,7 @@ template <int size> __device__ void karatsubaMulOneStep(unsigned int *a, unsigne
 			t_a = 1;
 		}
 	}
-	//âû÷èñëÿåì ìîäóëü ðàçíîñòè â ñëó÷àå 
+	//вычисляем модуль разности в случае 
 	if (t_a == 1) {
 		unsigned int mask_a = -t_a;
 		for (int i = 0; i < size / 2; i++) {
@@ -193,7 +193,7 @@ template <int size> __device__ void karatsubaMulOneStep(unsigned int *a, unsigne
 		}
 	}
 	
-	//êëàññè÷åñêîå âû÷èòàíèå
+	//классическое вычитание
 	zaem = 0;
 	for (int i = 0; i < size / 2; i++) {
 		middleResTwo[i] = rightB[i] - leftB[i] - zaem;
@@ -220,9 +220,9 @@ template <int size> __device__ void karatsubaMulOneStep(unsigned int *a, unsigne
 		}
 	}
 
-	//âû÷èñëåíèå ïðîèçâåäåíèé ìîäóëåé
+	//вычисление произведений модулей
 	standartMulKernelKar <size / 2>(middleResOne, middleResTwo, middleResThree);
-	//âû÷èòàíèå ïðîèçâåäåíèÿ èç öåíòðàëüíûõ áèò
+	//вычитание произведения из центральных бит
 	for (int i = 0; i < size; i++) {
 		carryAdd[i] = 0;
 	}
@@ -343,7 +343,7 @@ void main()
 		fprintf(stderr, "cudaMalloc failed! 5");
 		return;
 	}
-	//çàìåðû âðåìåíè
+	//замеры времени
 	cudaEvent_t start, stop;
 	
 	float gpuTime = 0.0f;
@@ -351,7 +351,7 @@ void main()
 	cudaEventCreate(&start);
 	cudaEventCreate(&stop);
 
-	cudaEventRecord(start, 0);//íà÷àëî îòñ÷åòà
+	cudaEventRecord(start, 0);//начало отсчета
 
 	func_2 <<<1, 1>>> (a_device, b_device, resArrray_device);
 
