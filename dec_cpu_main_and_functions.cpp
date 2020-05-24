@@ -1,4 +1,4 @@
-// ConsoleApplication1.cpp: определяет точку входа для консольного приложения.
+// ConsoleApplication1.cpp: РѕРїСЂРµРґРµР»СЏРµС‚ С‚РѕС‡РєСѓ РІС…РѕРґР° РґР»СЏ РєРѕРЅСЃРѕР»СЊРЅРѕРіРѕ РїСЂРёР»РѕР¶РµРЅРёСЏ.
 //
 
 #include "stdafx.h"
@@ -43,7 +43,7 @@ template <int size> void standartMulKernelKar(unsigned int* a, unsigned int* b, 
 		res[i] = 0;
 	}
 
-	//само умножение
+	//СЃР°РјРѕ СѓРјРЅРѕР¶РµРЅРёРµ
 	for (int i = 0; i< size; i++) {
 		for (int j = 0; j < size; j++) {
 			tempResult = res[i + j] + a[i] * b[j];
@@ -51,7 +51,7 @@ template <int size> void standartMulKernelKar(unsigned int* a, unsigned int* b, 
 			carryArr[i + j + 1] += tempResult / 10;
 		}
 	}
-	//распределение переноса
+	//СЂР°СЃРїСЂРµРґРµР»РµРЅРёРµ РїРµСЂРµРЅРѕСЃР°
 	for (int i = 0; i < 2 * size; i++) {
 		tempResult = carryArr[i] + res[i];
 		c[i] = tempResult % 10;
@@ -94,13 +94,13 @@ template <int size> void karatsubaMulOneStep(unsigned int *a, unsigned int *b, u
 	}
 
 	unsigned long long int tempRes = 0;
-	//А0*В0
+	//Рђ0*Р’0
 	standartMulKernelKar <size / 2>(leftA, leftB, middleResOne);
 
-	//А1*В1
+	//Рђ1*Р’1
 	standartMulKernelKar <size / 2>(rightA, rightB, middleResTwo);
 
-	//заполняем центральные значения 
+	//Р·Р°РїРѕР»РЅСЏРµРј С†РµРЅС‚СЂР°Р»СЊРЅС‹Рµ Р·РЅР°С‡РµРЅРёСЏ 
 	for (int i = 0; i < size; i++) {
 		res[i] = middleResOne[i];
 	}
@@ -110,7 +110,7 @@ template <int size> void karatsubaMulOneStep(unsigned int *a, unsigned int *b, u
 	}
 
 	int perenos = 0;
-	//добавляем A0*B0 и A1*B1 к центральным байтам
+	//РґРѕР±Р°РІР»СЏРµРј A0*B0 Рё A1*B1 Рє С†РµРЅС‚СЂР°Р»СЊРЅС‹Рј Р±Р°Р№С‚Р°Рј
 	for (int i = 0; i < size; i++) {
 		tempRes = res[i + size / 2] + middleResOne[i];
 		res[i + size / 2] = tempRes % 10;
@@ -158,7 +158,7 @@ template <int size> void karatsubaMulOneStep(unsigned int *a, unsigned int *b, u
 		carryAdd[i] = 0;
 	}
 
-	//вычисляем разности
+	//РІС‹С‡РёСЃР»СЏРµРј СЂР°Р·РЅРѕСЃС‚Рё
 	unsigned short int t_a = 0;
 	unsigned short int t_b = 0;
 
@@ -171,7 +171,7 @@ template <int size> void karatsubaMulOneStep(unsigned int *a, unsigned int *b, u
 	}
 
 	int tempDiff = 0;
-	//классическое вычитание 
+	//РєР»Р°СЃСЃРёС‡РµСЃРєРѕРµ РІС‹С‡РёС‚Р°РЅРёРµ 
 	int zaem = 0;
 	int base = 10;
 
@@ -204,7 +204,7 @@ template <int size> void karatsubaMulOneStep(unsigned int *a, unsigned int *b, u
 		}
 	}
 
-	//классическое вычитание
+	//РєР»Р°СЃСЃРёС‡РµСЃРєРѕРµ РІС‹С‡РёС‚Р°РЅРёРµ
 	zaem = 0;
 	for (int i = 0; i < size / 2; i++) {
 		//middleResTwo[i] = (rightB[i] - leftB[i] - zaem) % 10;
@@ -237,10 +237,10 @@ template <int size> void karatsubaMulOneStep(unsigned int *a, unsigned int *b, u
 	}
 
 
-	//вычисление произведений модулей
+	//РІС‹С‡РёСЃР»РµРЅРёРµ РїСЂРѕРёР·РІРµРґРµРЅРёР№ РјРѕРґСѓР»РµР№
 	standartMulKernelKar <size / 2>(middleResOne, middleResTwo, middleResThree);
 
-	//вычитание произведения из центральных бит
+	//РІС‹С‡РёС‚Р°РЅРёРµ РїСЂРѕРёР·РІРµРґРµРЅРёСЏ РёР· С†РµРЅС‚СЂР°Р»СЊРЅС‹С… Р±РёС‚
 	for (int i = 0; i < size; i++) {
 		carryAdd[i] = 0;
 	}
