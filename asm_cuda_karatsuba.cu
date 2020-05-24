@@ -64,13 +64,13 @@ template <int size> __device__ void karatsubaMul_128(unsigned int *a, unsigned i
 	unsigned int middleResOne[size], middleResTwo[size], middleResThree[size];
 	unsigned int res[2 * size];
 	unsigned int tempRes = 0;
-	//А0*В0
+	//Рђ0*Р’0
 	standartMulKernelKar <size / 2>(leftA, leftB, middleResOne);
 
-	//А1*В1
+	//Рђ1*Р’1
 	standartMulKernelKar <size / 2>(rightA, rightB, middleResTwo);
 
-	//заполняем центральные значения 
+	//Р·Р°РїРѕР»РЅСЏРµРј С†РµРЅС‚СЂР°Р»СЊРЅС‹Рµ Р·РЅР°С‡РµРЅРёСЏ 
 	for (int i = 0; i < size; i++) {
 		res[i] = middleResOne[i];
 	}
@@ -79,7 +79,7 @@ template <int size> __device__ void karatsubaMul_128(unsigned int *a, unsigned i
 		res[i + size] = middleResTwo[i];
 	}
 
-	//добавляем A0*B0 и A1*B1 к центральным байтам
+	//РґРѕР±Р°РІР»СЏРµРј A0*B0 Рё A1*B1 Рє С†РµРЅС‚СЂР°Р»СЊРЅС‹Рј Р±Р°Р№С‚Р°Рј
 	//+a0*b0
 	asm volatile("add.cc.u32 %0, %1, %2;\n\t":\
 		"=r"(res[size / 2]) : "r"(res[size / 2]), "r"(middleResOne[0]));
@@ -88,8 +88,8 @@ template <int size> __device__ void karatsubaMul_128(unsigned int *a, unsigned i
 		asm volatile("addc.cc.u32 %0, %1, %2;\n\t":\
 			"=r"(res[i + size / 2]):"r"(res[i + size / 2]), "r"(middleResOne[i]));
 	}
-	//вот здесь возникает вопрос: все ли будет в порядке с флагом cc.cf? 
-	//распределение переноса
+	//РІРѕС‚ Р·РґРµСЃСЊ РІРѕР·РЅРёРєР°РµС‚ РІРѕРїСЂРѕСЃ: РІСЃРµ Р»Рё Р±СѓРґРµС‚ РІ РїРѕСЂСЏРґРєРµ СЃ С„Р»Р°РіРѕРј cc.cf? 
+	//СЂР°СЃРїСЂРµРґРµР»РµРЅРёРµ РїРµСЂРµРЅРѕСЃР°
 	for (int i = 0; i < size / 2; i++) {
 		asm volatile("addc.cc.u32 %0, %1, 0;\n\t":\
 			"=r"(res[i + size / 2 + size]) : "r"(res[i + size / 2 + size]));
@@ -103,14 +103,14 @@ template <int size> __device__ void karatsubaMul_128(unsigned int *a, unsigned i
 		asm volatile("addc.cc.u32 %0, %1, %2;\n\t":\
 			"=r"(res[i + size / 2]) : "r"(res[i + size / 2]), "r"(middleResTwo[i]));
 	}
-	//вот здесь возникает вопрос: все ли будет в порядке с флагом cc.cf? 
-	//распределение переноса
+	//РІРѕС‚ Р·РґРµСЃСЊ РІРѕР·РЅРёРєР°РµС‚ РІРѕРїСЂРѕСЃ: РІСЃРµ Р»Рё Р±СѓРґРµС‚ РІ РїРѕСЂСЏРґРєРµ СЃ С„Р»Р°РіРѕРј cc.cf? 
+	//СЂР°СЃРїСЂРµРґРµР»РµРЅРёРµ РїРµСЂРµРЅРѕСЃР°
 	for (int i = 0; i < size / 2; i++) {
 		asm volatile("addc.cc.u32 %0, %1, 0;\n\t":\
 			"=r"(res[i + size / 2 + size]) : "r"(res[i + size / 2 + size]));
 	}
 
-	//вычисляем разности
+	//РІС‹С‡РёСЃР»СЏРµРј СЂР°Р·РЅРѕСЃС‚Рё
 	unsigned int t_a = 0;
 	unsigned int t_b = 0;
 
@@ -122,14 +122,14 @@ template <int size> __device__ void karatsubaMul_128(unsigned int *a, unsigned i
 		middleResTwo[i] = 0;
 	}
 
-	//классическое вычитание 
+	//РєР»Р°СЃСЃРёС‡РµСЃРєРѕРµ РІС‹С‡РёС‚Р°РЅРёРµ 
 	asm volatile("sub.cc.u32 %0, %1, %2;\n\t":\
 		"=r"(middleResOne[0]) : "r"(rightA[0]), "r"(leftA[0]));
 	for (int i = 1; i < size / 2; i++) {
 		asm volatile("subc.cc.u32 %0, %1, %2;\n\t":\
 			"=r"(middleResOne[i]) : "r"(rightA[i]), "r"(leftA[i]));
 	}
-	//запоминаем бит заема
+	//Р·Р°РїРѕРјРёРЅР°РµРј Р±РёС‚ Р·Р°РµРјР°
 	asm volatile("addc.u32 %0, 0, 0;\n\t" : "=r"(t_a) : );
 
 	if (t_a) {
@@ -145,14 +145,14 @@ template <int size> __device__ void karatsubaMul_128(unsigned int *a, unsigned i
 		}
 	}
 
-	//классическое вычитани
+	//РєР»Р°СЃСЃРёС‡РµСЃРєРѕРµ РІС‹С‡РёС‚Р°РЅРё
 	asm volatile("sub.cc.u32 %0, %1, %2;\n\t":\
 		"=r"(middleResTwo[0]) : "r"(rightB[0]), "r"(leftB[0]));
 	for (int i = 1; i < size / 2; i++) {
 		asm volatile("subc.cc.u32 %0, %1, %2;\n\t":\
 			"=r"(middleResTwo[i]) : "r"(rightB[i]), "r"(leftB[i]));
 	}
-	//запоминаем бит заема
+	//Р·Р°РїРѕРјРёРЅР°РµРј Р±РёС‚ Р·Р°РµРјР°
 	asm volatile("addc.u32 %0, 0, 0;\n\t" : "=r"(t_b) : );
 
 	if (t_b == 1) {
@@ -168,7 +168,7 @@ template <int size> __device__ void karatsubaMul_128(unsigned int *a, unsigned i
 		}
 	}
 
-	//вычисление произведений модулей
+	//РІС‹С‡РёСЃР»РµРЅРёРµ РїСЂРѕРёР·РІРµРґРµРЅРёР№ РјРѕРґСѓР»РµР№
 	standartMulKernelKar <size / 2>(middleResOne, middleResTwo, middleResThree);
 
 	if (!(t_a ^ t_b)) {
@@ -179,7 +179,7 @@ template <int size> __device__ void karatsubaMul_128(unsigned int *a, unsigned i
 			asm volatile("subc.cc.u32 %0, %1, %2;\n\t":\
 				"=r"(res[i + size / 2]) : "r"(res[i + size / 2]), "r"(middleResThree[i]));
 		}
-		//распределение заема
+		//СЂР°СЃРїСЂРµРґРµР»РµРЅРёРµ Р·Р°РµРјР°
 		for (int i = 0; i < size / 2; i++) {
 			asm volatile("subc.cc.u32 %0, 0, 0;\n\t":\
 				"=r"(res[i + size / 2 + size]) : );
@@ -193,7 +193,7 @@ template <int size> __device__ void karatsubaMul_128(unsigned int *a, unsigned i
 			asm volatile("addc.cc.u32 %0, %1, %2;\n\t":\
 				"=r"(res[i + size / 2]) : "r"(res[i + size / 2]), "r"(middleResThree[i]));
 		}
-		//распределение переноса
+		//СЂР°СЃРїСЂРµРґРµР»РµРЅРёРµ РїРµСЂРµРЅРѕСЃР°
 		for (int i = 0; i < size / 2; i++) {
 			asm volatile("addc.cc.u32 %0, %1, 0;\n\t":\
 				"=r"(res[i + size / 2 + size]) : "r"(res[i + size / 2 + size]));
@@ -263,7 +263,7 @@ void main()
 		fprintf(stderr, "cudaMalloc failed! 5");
 		return;
 	}
-	//замеры времени
+	//Р·Р°РјРµСЂС‹ РІСЂРµРјРµРЅРё
 	cudaEvent_t start, stop;
 
 	float gpuTime = 0.0f;
@@ -271,7 +271,7 @@ void main()
 	cudaEventCreate(&start);
 	cudaEventCreate(&stop);
 
-	cudaEventRecord(start, 0);//начало отсчета
+	cudaEventRecord(start, 0);//РЅР°С‡Р°Р»Рѕ РѕС‚СЃС‡РµС‚Р°
 
 	//func_1 <<<1, 16>>> (a_device, b_device, resArrray_device);
 
